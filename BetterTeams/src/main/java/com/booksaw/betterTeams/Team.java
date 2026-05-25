@@ -113,6 +113,13 @@ public class Team {
 		return Main.plugin.getConfig().getBoolean("allowAllyChests");
 	}
 
+	public static String stripGradients(String name) {
+		if (name == null) {
+			return null;
+		}
+		return name.replaceAll("(?i)<gradient(:[a-zA-Z0-9_#.-]+){2,}>|</gradient>", "");
+	}
+
 	/**
 	 * Used to check if the provided team name is a valid name for a team
 	 *
@@ -126,8 +133,13 @@ public class Team {
 			return false;
 		}
 
+		String stripped = stripGradients(name);
+		if (stripped == null || stripped.trim().isEmpty()) {
+			return false;
+		}
+
 		for (String temp : Main.plugin.getConfig().getStringList("blacklist")) {
-			if (temp.equalsIgnoreCase(name.toLowerCase())) {
+			if (temp.equalsIgnoreCase(stripped.toLowerCase())) {
 				return false;
 			}
 		}
@@ -135,25 +147,25 @@ public class Team {
 		String chars = Main.plugin.getConfig().getString("bannedChars");
 		if (chars != null) {
 			for (char temp : chars.toCharArray()) {
-				if (name.contains(Character.toString(temp))) {
+				if (stripped.contains(Character.toString(temp))) {
 					return false;
 				}
 			}
 		}
 
-		if (!(name.equals(ChatColor.stripColor(name)))) {
+		if (!(stripped.equals(ChatColor.stripColor(stripped)))) {
 			return false;
 		}
 
 		// stop players inputting color codes
-		if (name.contains("&") || name.contains(":")) {
+		if (stripped.contains("&") || stripped.contains(":")) {
 			return false;
 		}
 
 		String allowed = Main.plugin.getConfig().getString("allowedChars");
 
 		if (allowed != null && !allowed.isEmpty()) {
-			for (char temp : name.toCharArray()) {
+			for (char temp : stripped.toCharArray()) {
 				if (!allowed.contains(Character.toString(temp))) {
 					return false;
 				}

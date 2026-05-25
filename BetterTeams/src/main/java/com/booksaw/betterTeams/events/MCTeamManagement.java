@@ -2,6 +2,7 @@ package com.booksaw.betterTeams.events;
 
 import com.booksaw.betterTeams.Main;
 import com.booksaw.betterTeams.Team;
+import com.booksaw.betterTeams.text.Formatter;
 import com.booksaw.betterTeams.customEvents.BelowNameChangeEvent;
 import com.booksaw.betterTeams.customEvents.BelowNameChangeEvent.ChangeType;
 import lombok.Getter;
@@ -136,11 +137,77 @@ public class MCTeamManagement implements Listener {
 	}
 
 	public void setupTeam(org.bukkit.scoreboard.Team scoreboardTeam, String teamName) {
-		// setting team name
+		byte[] gsonBytes = new byte[]{110, 101, 116, 46, 107, 121, 111, 114, 105, 46, 97, 100, 118, 101, 110, 116, 117, 114, 101, 46, 116, 101, 120, 116, 46, 115, 101, 114, 105, 97, 108, 105, 122, 101, 114, 46, 103, 115, 111, 110, 46, 71, 115, 111, 110, 67, 111, 109, 112, 111, 110, 101, 110, 116, 83, 101, 114, 105, 97, 108, 105, 122, 101, 114};
+		String gsonClassName = new String(gsonBytes, java.nio.charset.StandardCharsets.UTF_8);
+
 		if (type == BelowNameType.PREFIX) {
-			scoreboardTeam.setPrefix(teamName);
+			try {
+				net.kyori.adventure.text.Component component = Formatter.absolute().process(teamName);
+				String jsonString = net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson().serialize(component);
+				ClassLoader serverClassLoader = org.bukkit.Bukkit.class.getClassLoader();
+				Class<?> gsonSerializerClass = serverClassLoader.loadClass(gsonClassName);
+				java.lang.reflect.Method gsonMethod = null;
+				for (java.lang.reflect.Method m : gsonSerializerClass.getMethods()) {
+					if (m.getName().equals("gson") && m.getParameterCount() == 0) {
+						gsonMethod = m;
+						break;
+					}
+				}
+				Object gsonInstance = gsonMethod.invoke(null);
+				java.lang.reflect.Method deserializeMethod = null;
+				for (java.lang.reflect.Method m : gsonSerializerClass.getMethods()) {
+					if (m.getName().equals("deserialize") && m.getParameterCount() == 1 && m.getParameterTypes()[0] == String.class) {
+						deserializeMethod = m;
+						break;
+					}
+				}
+				Object nativeComponent = deserializeMethod.invoke(gsonInstance, jsonString);
+				java.lang.reflect.Method prefixMethod = null;
+				for (java.lang.reflect.Method m : org.bukkit.scoreboard.Team.class.getMethods()) {
+					if (m.getName().equals("prefix") && m.getParameterCount() == 1) {
+						prefixMethod = m;
+						break;
+					}
+				}
+				prefixMethod.invoke(scoreboardTeam, nativeComponent);
+			} catch (Exception e) {
+				Main.plugin.getLogger().log(java.util.logging.Level.WARNING, "Scoreboard prefix reflection failed", e);
+				scoreboardTeam.setPrefix(teamName);
+			}
 		} else if (type == BelowNameType.SUFFIX) {
-			scoreboardTeam.setSuffix(" " + teamName);
+			try {
+				net.kyori.adventure.text.Component component = Formatter.absolute().process(" " + teamName);
+				String jsonString = net.kyori.adventure.text.serializer.gson.GsonComponentSerializer.gson().serialize(component);
+				ClassLoader serverClassLoader = org.bukkit.Bukkit.class.getClassLoader();
+				Class<?> gsonSerializerClass = serverClassLoader.loadClass(gsonClassName);
+				java.lang.reflect.Method gsonMethod = null;
+				for (java.lang.reflect.Method m : gsonSerializerClass.getMethods()) {
+					if (m.getName().equals("gson") && m.getParameterCount() == 0) {
+						gsonMethod = m;
+						break;
+					}
+				}
+				Object gsonInstance = gsonMethod.invoke(null);
+				java.lang.reflect.Method deserializeMethod = null;
+				for (java.lang.reflect.Method m : gsonSerializerClass.getMethods()) {
+					if (m.getName().equals("deserialize") && m.getParameterCount() == 1 && m.getParameterTypes()[0] == String.class) {
+						deserializeMethod = m;
+						break;
+					}
+				}
+				Object nativeComponent = deserializeMethod.invoke(gsonInstance, jsonString);
+				java.lang.reflect.Method suffixMethod = null;
+				for (java.lang.reflect.Method m : org.bukkit.scoreboard.Team.class.getMethods()) {
+					if (m.getName().equals("suffix") && m.getParameterCount() == 1) {
+						suffixMethod = m;
+						break;
+					}
+				}
+				suffixMethod.invoke(scoreboardTeam, nativeComponent);
+			} catch (Exception e) {
+				Main.plugin.getLogger().log(java.util.logging.Level.WARNING, "Scoreboard suffix reflection failed", e);
+				scoreboardTeam.setSuffix(" " + teamName);
+			}
 		}
 
 		if (!Main.plugin.getConfig().getBoolean("collide")) {

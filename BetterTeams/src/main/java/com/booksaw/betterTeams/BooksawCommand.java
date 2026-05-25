@@ -50,9 +50,7 @@ public class BooksawCommand extends BukkitCommand {
 
 	@Override
 	public boolean execute(@NotNull CommandSender sender, @NotNull String label, String[] args) {
-		// running custom command manager
 		if (checkPointers(sender, label, args)) {
-			// if pointers were found and dealt with
 			return true;
 		}
 
@@ -78,7 +76,7 @@ public class BooksawCommand extends BukkitCommand {
 
 			if (response != null)
 				response.sendResponseMessage(sender);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			Main.plugin.getLogger().severe(
 					"Something went wrong while executing the command, please report this https://github.com/booksaw/BetterTeams/issues/new/choose");
 			e.printStackTrace();

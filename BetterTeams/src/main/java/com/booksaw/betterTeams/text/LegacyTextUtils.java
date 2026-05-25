@@ -19,6 +19,11 @@ public final class LegacyTextUtils {
 	private static final Pattern STANDARD_HEX_PATTERN = Pattern.compile("(?i)&#([0-9A-F]{6})");
 	private static final Pattern BUNGEE_HEX_PATTERN = Pattern.compile("(?i)&x(&[0-9A-F]){6}");
 
+	private static final LegacyComponentSerializer HEX_SERIALIZER = LegacyComponentSerializer.builder()
+			.character(LegacyComponentSerializer.SECTION_CHAR)
+			.hexColors()
+			.build();
+
 	public static String sectionToAmpersand(String s) {
 		return s.replace("§", "&");
 	}
@@ -125,14 +130,14 @@ public final class LegacyTextUtils {
 	}
 
 	public static String parseAllAdventure(String input) {
-		return LegacyComponentSerializer.legacySection().serializeOr(Formatter.absolute().process(input), "");
+		return HEX_SERIALIZER.serializeOr(Formatter.absolute().process(input), "");
 	}
 
 	public static String parseAdventure(String input) {
-		return LegacyComponentSerializer.legacySection().serializeOr(Formatter.legacy().process(input), "");
+		return HEX_SERIALIZER.serializeOr(Formatter.legacy().process(input), "");
 	}
 
 	public static String serialize(Component input) {
-		return LegacyComponentSerializer.legacySection().serializeOr(input, "");
+		return HEX_SERIALIZER.serializeOr(input, "");
 	}
 }

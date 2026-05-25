@@ -16,13 +16,14 @@ public class TeamUtil {
 			return new CommandResponse("create.banned");
 		}
 
+		String stripped = Team.stripGradients(teamName);
 		int max = Math.min(55, Main.plugin.getConfig().getInt("maxTeamLength"));
-		if (max != -1 && max < teamName.length()) {
+		if (max != -1 && max < stripped.length()) {
 			return new CommandResponse("create.maxLength");
 		}
 
 		int min = Math.max(0, Math.min(55, Main.plugin.getConfig().getInt("minTeamLength")));
-		if (min != 0 && min > teamName.length()) {
+		if (min != 0 && min > stripped.length()) {
 			return new CommandResponse("create.minLength");
 		}
 
@@ -34,8 +35,9 @@ public class TeamUtil {
 			return new CommandResponse("tag.banned");
 		}
 
+		String stripped = Team.stripGradients(tagName);
 		int max = Math.min(55, Main.plugin.getConfig().getInt("maxTagLength"));
-		if (max != -1 && max < tagName.length()) {
+		if (max != -1 && max < stripped.length()) {
 			return new CommandResponse("tag.maxLength");
 		}
 

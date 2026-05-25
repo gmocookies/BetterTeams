@@ -38,7 +38,7 @@ public class SeparatedYamlStorageManager extends YamlStorageManager implements L
 
 		teamStorageDir = SeparatedYamlTeamStorage.getTeamSaveFile();
 		if (!teamStorageDir.isDirectory()) {
-			teamStorageDir.mkdir();
+			teamStorageDir.mkdirs();
 		}
 
 		for (String str : teamStorage.getStringList("playerLookup")) {
@@ -232,18 +232,20 @@ public class SeparatedYamlStorageManager extends YamlStorageManager implements L
 	private <T> String[] sortTeamByX(ValueSorter<T> valueSorter, Comparator<? super CrossReference<T>> comparator) {
 		File folder = SeparatedYamlTeamStorage.getTeamSaveFile();
 		List<CrossReference<T>> teams = new ArrayList<>();
-		for (File f : folder.listFiles()) {
-			// team has already been resetS
-			try {
-				YamlConfiguration yamlConfig = new YamlConfiguration();
-				yamlConfig.load(f);
-				String name = yamlConfig.getString(StoredTeamValue.NAME.getReference());
-				if (name == null) {
-					throw new IllegalStateException("Team name in " + f.getName() + " is empty, it will be skipped");
+		File[] files = folder.listFiles();
+		if (files != null) {
+			for (File f : files) {
+				try {
+					YamlConfiguration yamlConfig = new YamlConfiguration();
+					yamlConfig.load(f);
+					String name = yamlConfig.getString(StoredTeamValue.NAME.getReference());
+					if (name == null) {
+						throw new IllegalStateException("Team name in " + f.getName() + " is empty, it will be skipped");
+					}
+					teams.add(new CrossReference<>(name, valueSorter.getValueToSort(yamlConfig)));
+				} catch (Exception e) {
+					Main.plugin.getLogger().severe("UNABLE TO READ TEAM DATA FROM " + f);
 				}
-				teams.add(new CrossReference<>(name, valueSorter.getValueToSort(yamlConfig)));
-			} catch (Exception e) {
-				Main.plugin.getLogger().severe("UNABLE TO READ TEAM DATA FROM " + f);
 			}
 		}
 
@@ -296,22 +298,24 @@ public class SeparatedYamlStorageManager extends YamlStorageManager implements L
 
 		// purging all teams that are not loaded async to minimise server impact
 		Main.plugin.getFoliaLib().getScheduler().runAsync(task -> {
-			for (File f : teamStorageDir.listFiles()) {
-				String teamID = f.getName();
-				teamID = teamID.replace(".yml", "");
-				// team has already been resetS
-				if (loadedTeamsClone.containsKey(UUID.fromString(teamID))) {
-					continue;
-				}
+			File[] files = teamStorageDir.listFiles();
+			if (files != null) {
+				for (File f : files) {
+					String teamID = f.getName();
+					teamID = teamID.replace(".yml", "");
+					if (loadedTeamsClone.containsKey(UUID.fromString(teamID))) {
+						continue;
+					}
 
-				YamlConfiguration yamlConfig = YamlConfiguration.loadConfiguration(f);
-				yamlConfig.set(storedTeamValue.getReference(), value);
-				try {
-					yamlConfig.save(f);
-				} catch (IOException e) {
-					Main.plugin.getLogger()
-							.warning("Failed to purge the " + storedTeamValue + "of the team with the file " + f.getPath());
-					e.printStackTrace();
+					YamlConfiguration yamlConfig = YamlConfiguration.loadConfiguration(f);
+					yamlConfig.set(storedTeamValue.getReference(), value);
+					try {
+						yamlConfig.save(f);
+					} catch (IOException e) {
+						Main.plugin.getLogger()
+								.warning("Failed to purge the " + storedTeamValue + "of the team with the file " + f.getPath());
+						e.printStackTrace();
+					}
 				}
 			}
 		});
@@ -407,6 +411,9 @@ public class SeparatedYamlStorageManager extends YamlStorageManager implements L
 		File folder = SeparatedYamlTeamStorage.getTeamSaveFile();
 
 		File[] files = folder.listFiles();
+		if (files == null) {
+			return;
+		}
 
 		int i = 0;
 		for (File f : files) {
